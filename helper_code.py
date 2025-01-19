@@ -84,20 +84,6 @@ def get_variable(string, variable_name):
             has_variable = True
     return variable, has_variable
 
-def get_signal_files_from_header(string):
-    signal_files = list()
-    for i, l in enumerate(string.split('\n')):
-        arrs = [arr.strip() for arr in l.split(' ')]
-        if i==0 and not l.startswith('#'):
-            num_channels = int(arrs[1])
-        elif i<=num_channels and not l.startswith('#'):
-            signal_file = arrs[0]
-            if signal_file not in signal_files:
-                signal_files.append(signal_file)
-        else:
-            break
-    return signal_files
-
 # Get the header file for a record.
 def get_header_file(record):
     if not record.endswith('.hea'):
@@ -114,6 +100,20 @@ def get_signal_files(record):
         signal_files = get_signal_files_from_header(header)
     else:
         signal_files = list()
+    return signal_files
+
+def get_signal_files_from_header(string):
+    signal_files = list()
+    for i, l in enumerate(string.split('\n')):
+        arrs = [arr.strip() for arr in l.split(' ')]
+        if i==0 and not l.startswith('#'):
+            num_channels = int(arrs[1])
+        elif i<=num_channels and not l.startswith('#'):
+            signal_file = arrs[0]
+            if signal_file not in signal_files:
+                signal_files.append(signal_file)
+        else:
+            break
     return signal_files
 
 # Get the patient ID from a header or a similar string.
