@@ -11,8 +11,6 @@ import sys
 import wfdb
 
 ### Challenge variables
-patient_id_string = '# Patient ID:'
-encounter_id_string = '# Encounter ID:'
 age_string = '# Age:'
 sex_string = '# Sex:'
 label_string = '# Chagas label:'
@@ -115,20 +113,6 @@ def get_signal_files_from_header(string):
         else:
             break
     return signal_files
-
-# Get the patient ID from a header or a similar string.
-def get_patient_id(string):
-    patient_id, has_patient_id = get_variable(string, patient_id_string)
-    if not has_patient_id:
-        patient_id = float('nan')
-    return patient_id
-
-# Get the encounter ID from a header or a similar string.
-def get_patient_id(string):
-    encounter_id, has_encounter_id = get_variable(string, encounter_id_string)
-    if not has_encounter_id:
-        encounter_id = float('nan')
-    return encounter_id
 
 # Get the age from a header or a similar string.
 def get_age(string):
