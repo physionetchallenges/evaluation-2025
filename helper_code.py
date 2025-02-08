@@ -481,4 +481,3 @@ def sanitize_boolean_value(x):
         return 1
     else:
         return float('nan')
-    
