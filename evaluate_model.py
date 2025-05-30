@@ -6,8 +6,8 @@
 #
 #   python evaluate_model.py -d data -o outputs -s scores.csv
 #
-# where 'data' is a folder containing files with the reference signals and labels for the data, 'outputs' is a folder containing
-# files with the outputs from your models, and 'scores.csv' (optional) is a collection of scores for the model outputs.
+# where 'data' is a folder containing WFDB files with the labels for the data, 'outputs' is a folder containing WFDB files with
+# outputs from your model, and 'scores.csv' (optional) is a collection of scores for the model outputs.
 #
 # Each data or output file must have the format described on the Challenge webpage. The scores for the algorithm outputs are also
 # described on the Challenge webpage.
@@ -16,6 +16,7 @@ import argparse
 import numpy as np
 import os
 import os.path
+import pandas as pd
 import sys
 
 from helper_code import *
@@ -31,33 +32,69 @@ def get_parser():
 
 # Evaluate the models.
 def evaluate_model(data_folder, output_folder):
-    # Find the records.
-    records = find_records(data_folder)
-    num_records = len(records)
+    # Load the labels from the data.
+    record_to_label = dict()
+    if os.path.isdir(data_folder):
+        records = find_records(data_folder)
+        for i, record in enumerate(records):
+            label_filename = os.path.join(data_folder, record) + '.hea'
+            text = load_text(label_filename)
+            label = get_label(text, allow_missing=False)
+            record_to_label[record] = label
+    else:
+        NotImplementedError(f'{data_folder} is not a directory or folder.')
 
-    if num_records == 0:
-        raise FileNotFoundError('No records found.')
+    if not record_to_label:
+        raise FileNotFoundError('No data labels found.')
+
+    # Load the labels from the outputs.
+    record_to_binary_output = dict()
+    record_to_probability_output = dict()
+    if os.path.isdir(output_folder):
+        records = find_records(output_folder, file_extension='.txt')
+        for i, record in enumerate(records):
+            output_filename = os.path.join(output_folder, record) + '.txt'
+            text = load_text(output_filename)
+            binary_output = get_label(text, allow_missing=True)
+            probability_output = get_probability(text, allow_missing=True)
+            record_to_binary_output[record] = binary_output
+            record_to_probability_output[record] = probability_output
+    else:
+        NotImplementedError(f'File I/O for {output_folder} not implemented')
+
+    if not record_to_binary_output:
+        raise FileNotFoundError('No binary outputs found.')
+
+    if not record_to_probability_output:
+        raise FileNotFoundError('No probability outputs found.')
+
+    # Convert the labels and outputs to vectors.
+    records = sorted(record_to_label)
+    num_records = len(records)
 
     labels = np.zeros(num_records)
     binary_outputs = np.zeros(num_records)
     probability_outputs = np.zeros(num_records)
 
-    # Load the labels and model outputs.
     for i, record in enumerate(records):
-        label_filename = os.path.join(data_folder, record)
-        label = load_label(label_filename)
-
-        output_filename = os.path.join(output_folder, record + '.txt')
-        output = load_text(output_filename)
-        binary_output = get_label(output, allow_missing=True)
-        probability_output = get_probability(output, allow_missing=True)
-
-        # Missing model outputs are interpreted as zero for the binary and probability outputs.
+        label = record_to_label[record]
         labels[i] = label
+
+        # Replace missing binary outputs with zeros so that we can evaluate an output for each record.
+        if record in record_to_binary_output:
+            binary_output = record_to_binary_output[record]
+        else:
+            binary_output = float('nan')
         if not is_nan(binary_output):
             binary_outputs[i] = binary_output
         else:
             binary_outputs[i] = 0
+
+        # Replace missing probability outputs with zeros so that we can evaluate an output for each record.
+        if record in record_to_probability_output:
+            probability_output = record_to_probability_output[record]
+        else:
+            probability_output = float('nan')
         if not is_nan(probability_output):
             probability_outputs[i] = probability_output
         else:
