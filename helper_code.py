@@ -311,7 +311,7 @@ def compute_accuracy(labels, outputs):
 def compute_f_measure(labels, outputs):
     from sklearn.metrics import f1_score
 
-    f_measure = f1_score(labels, outputs, labels=None, pos_label=1, average='weighted', sample_weight=None)
+    f_measure = f1_score(labels, outputs, pos_label=1, average='binary')
 
     return f_measure
 
